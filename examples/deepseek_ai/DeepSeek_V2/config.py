@@ -157,6 +157,7 @@ model = dict(
     num_chunks=1,  # if num_chunks > 1, interleaved pipeline scheduler is used.
     adapt_hf=True,
     multiple_of=1,
+    moe_tpye="GShard",
 )
 """
 zero1 parallel (dict):

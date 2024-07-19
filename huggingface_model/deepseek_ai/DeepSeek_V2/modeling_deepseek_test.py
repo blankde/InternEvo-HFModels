@@ -1209,7 +1209,7 @@ class DeepseekV2DecoderLayer(nn.Module):
             config=config, layer_idx=layer_idx
         )
 
-        self.mlp = (
+        self.feed_forward = (
             MoE(
                 config.hidden_size,
                 config.moe_intermediate_size,
@@ -1217,6 +1217,8 @@ class DeepseekV2DecoderLayer(nn.Module):
                 num_experts=config.n_routed_experts ,
                 ep_group=None,
                 ep_size=config.ep_size,
+                num_shared_experts=config.n_shared_experts,
+                residual_type="deepseek"
             )
             if (
                 config.n_routed_experts is not None
@@ -1230,7 +1232,7 @@ class DeepseekV2DecoderLayer(nn.Module):
                 and layer_idx >= config.first_k_dense_replace
                 and layer_idx % config.moe_layer_freq == 0
             ):
-            set_fp32_attr_to_module(self.mlp.moe_layer.gate)
+            set_fp32_attr_to_module(self.feed_forward.moe_layer.gate)
         self.input_layernorm = DeepseekV2RMSNorm(
             config.hidden_size, eps=config.rms_norm_eps
         )
@@ -1287,7 +1289,7 @@ class DeepseekV2DecoderLayer(nn.Module):
         # Fully Connected
         residual = hidden_states
         hidden_states = self.post_attention_layernorm(hidden_states)
-        hidden_states = self.mlp(hidden_states)[0]
+        hidden_states = self.feed_forward(hidden_states)[0]
         hidden_states = residual + hidden_states
 
         outputs = (hidden_states,)
