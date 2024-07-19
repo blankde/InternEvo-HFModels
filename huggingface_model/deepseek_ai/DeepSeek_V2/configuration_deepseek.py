@@ -174,7 +174,7 @@ class DeepseekV2Config(PretrainedConfig):
         norm_topk_prob = False,
         num_attention_heads = 16,
         num_experts_per_tok = 6,
-        num_hidden_layers = 20,
+        num_hidden_layers = 27,
         num_key_value_heads = 16,
         pretraining_tp = 1,
         q_lora_rank = None,
