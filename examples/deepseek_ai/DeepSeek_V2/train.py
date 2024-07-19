@@ -13,6 +13,7 @@ from internlm.train import initialize_model
 from internlm.utils.common import parse_args
 from internlm.model.registry import model_initializer, hf_config_initializer
 
+# from huggingface_model.deepseek_ai.DeepSeek_V2.modeling_deepseek_test import DeepseekV2ForCausalLM
 from huggingface_model.deepseek_ai.DeepSeek_V2.modeling_deepseek import DeepseekV2ForCausalLM
 from huggingface_model.deepseek_ai.DeepSeek_V2.configuration_deepseek import DeepseekV2Config
 
@@ -30,9 +31,26 @@ def main(args):
         gpc.config.model.num_attention_heads = hf_cfg.num_attention_heads
         gpc.config.model.mlp_ratio = hf_cfg.intermediate_size / hf_cfg.hidden_size
         gpc.config.model.vocab_size = hf_cfg.vocab_size
+        gpc.config.model.moe_use_residual = hf_cfg.n_shared_experts is not None and hf_cfg.n_shared_experts > 0
+        gpc.config.model.moe_type = "GShard"
+        
+        gpc.config.moe = {}
+        gpc.config.moe["top_k"] = hf_cfg.num_experts_per_tok
 
     # initialize model
     model = initialize_model()
+
+    
+    # NOTE scheduler will return get logit, moe_loss = logit, [hidden_states], for test
+    # we modify 118-122 as:
+    # #if hasattr(gpc.config.model, "num_experts"):
+    # #    # moe is used
+    # #    output, moe_losses = self._call_engine(engine, data)
+    # #else:
+    # output = self._call_engine(engine, data)
+    gpc.config.model.num_experts = hf_cfg.n_routed_experts
+            
+    # TODO 转换MoE的ckpt
 
     # initialize train dataloader
     train_dl, dataset_types = build_train_loader_with_data_type()
